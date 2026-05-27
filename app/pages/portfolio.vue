@@ -66,7 +66,7 @@
                   />
                 </div>
                 <p class="text-[10px] text-slate-500 mt-1 font-mono">
-                  {{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }}
+                  {{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }} | 現價 ${{ pos.current_price.toFixed(1) }}
                 </p>
               </div>
             </div>
@@ -121,6 +121,22 @@
                   </p>
                   <p class="mt-1">已領現金股利：<span class="font-bold text-amber-400 font-mono">${{ formatNumber(pos.dividend_received) }}</span></p>
                 </div>
+              </div>
+
+              <!-- 快速新增紀錄動作 -->
+              <div class="flex gap-2 py-3 border-b border-slate-800/40">
+                <button 
+                  @click="quickRecord(pos, 'BUY')"
+                  class="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 hover:border-rose-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
+                >
+                  ➕ 快速買進
+                </button>
+                <button 
+                  @click="quickRecord(pos, 'SELL')"
+                  class="flex-1 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
+                >
+                  ➖ 快速賣出
+                </button>
               </div>
 
               <!-- 個股關聯流水帳紀錄 -->
@@ -218,6 +234,19 @@ async function triggerRefresh() {
 
   // 觸發重新整理價格
   await portfolio.refreshPrices();
+}
+
+const router = useRouter();
+
+function quickRecord(pos: any, action: 'BUY' | 'SELL') {
+  router.push({
+    path: '/record',
+    query: {
+      code: pos.stock_code,
+      name: pos.stock_name,
+      type: action
+    }
+  });
 }
 
 // GSAP 卡片高度展開動畫

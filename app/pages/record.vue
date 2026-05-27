@@ -404,6 +404,20 @@ function formatAction(action: string): string {
     default: return action;
   }
 }
+
+const route = useRoute();
+
+onMounted(() => {
+  if (route.query.code) {
+    form.value.stock_code = String(route.query.code);
+  }
+  if (route.query.name) {
+    form.value.stock_name = String(route.query.name);
+  }
+  if (route.query.type) {
+    changeType(String(route.query.type));
+  }
+});
 </script>
 
 <style scoped>
