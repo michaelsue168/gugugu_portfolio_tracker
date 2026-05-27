@@ -331,17 +331,23 @@ function calculateEstimates() {
 
 // 送出表單到 Supabase
 async function submitForm() {
-  if (!user.value) {
-    alert('請先進行登入！');
-    return;
-  }
-
   submitting.value = true;
   try {
+    // 直接自 Supabase Auth 取得最可靠的登入使用者資訊，防範 Nuxt 響應狀態延遲
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authUser) {
+      alert('請先進行登入！');
+      submitting.value = false;
+      return;
+    }
+
+    const userId = authUser.id;
+
     if (selectedType.value === 'DISCOUNT') {
       // 寫入 cash_flows 資料表
       const { error } = await supabase.from('cash_flows').insert({
-        user_id: user.value.id,
+        user_id: userId,
         type: 'DISCOUNT',
         amount: Number(form.value.amount) || 0,
         note: form.value.note || '折讓收入',
@@ -358,7 +364,7 @@ async function submitForm() {
         : Math.abs(form.value.shares || 0);
 
       const { error } = await supabase.from('transactions').insert({
-        user_id: user.value.id,
+        user_id: userId,
         stock_code: form.value.stock_code.trim(),
         stock_name: form.value.stock_name.trim(),
         action: selectedType.value,

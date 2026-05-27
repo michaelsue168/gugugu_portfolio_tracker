@@ -214,21 +214,25 @@ export const usePortfolio = () => {
    * 從 Supabase 拉取所有與當前登入用戶相關的資料
    */
   async function fetchData() {
-    if (!user.value) {
-      transactions.value = [];
-      cashFlows.value = [];
-      return;
-    }
-
     loading.value = true;
     error.value = null;
 
     try {
-      // 1. 同步拉取交易流水帳
+      // 確保獲取最新真實的使用者 UUID 避開狀態延遲
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        transactions.value = [];
+        cashFlows.value = [];
+        loading.value = false;
+        return;
+      }
+
+      const userId = authUser.id;
+
       const { data: txData, error: txErr } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.value.id);
+        .eq('user_id', userId);
 
       if (txErr) throw txErr;
       transactions.value = (txData || []).map(tx => ({
@@ -243,7 +247,7 @@ export const usePortfolio = () => {
       const { data: cfData, error: cfErr } = await supabase
         .from('cash_flows')
         .select('*')
-        .eq('user_id', user.value.id);
+        .eq('user_id', userId);
 
       if (cfErr) throw cfErr;
       cashFlows.value = (cfData || []).map(cf => ({
