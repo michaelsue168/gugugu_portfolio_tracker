@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-slate-100 font-sans flex justify-center selection:bg-rose-500 selection:text-white">
     <!-- 行動端模擬外殼 (在桌機端居中限寬，手機端滿版) -->
-    <div class="w-full max-w-md min-h-screen flex flex-col bg-slate-900/40 backdrop-blur-md relative border-x border-slate-800/40 shadow-2xl pb-24 overflow-x-hidden">
+    <div class="w-full max-w-md h-screen flex flex-col bg-slate-900/40 backdrop-blur-md relative border-x border-slate-800/40 shadow-2xl overflow-hidden">
       <!-- 頂部 Header -->
       <header class="sticky top-0 z-40 bg-slate-950/70 backdrop-blur-lg border-b border-slate-800/50 px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -27,7 +27,7 @@
       </header>
 
       <!-- 主要內容區 -->
-      <main class="flex-1 p-4 overflow-y-auto">
+      <main class="flex-1 p-4 pb-28 overflow-y-auto">
         <slot />
       </main>
 
