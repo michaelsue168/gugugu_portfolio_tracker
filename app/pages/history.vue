@@ -95,16 +95,14 @@
       </div>
     </div>
 
-    <!-- ✏️ 編輯交易/折讓對話框 (Bottom Sheet Modal) -->
+    <!-- ✏️ 編輯交易/折讓對話框 (Centered Modal) -->
     <transition name="modal-slide">
-      <div v-if="showEditModal && editingItem" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
+      <div v-if="showEditModal && editingItem" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <!-- 遮罩背景 -->
         <div @click="closeEditModal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity"></div>
         
         <!-- 視窗卡片 -->
-        <div class="relative bg-slate-900 border-t sm:border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl px-5 pt-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:pb-5 space-y-4 max-h-[90vh] overflow-y-auto z-10 transform transition-all select-none">
-          <!-- 頂部拖曳把手 (手機端視覺) -->
-          <div class="w-10 h-1 bg-slate-800 rounded-full mx-auto sm:hidden mb-2"></div>
+        <div class="relative bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto z-10 transform transition-all select-none">
           
           <div class="flex justify-between items-center pb-2 border-b border-slate-850">
             <div>
@@ -474,15 +472,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Modal 抽屜滑動與淡入動畫 */
+/* Modal 縮放淡入動畫 */
 .modal-slide-enter-active,
 .modal-slide-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .modal-slide-enter-active .relative,
 .modal-slide-leave-active .relative {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal-slide-enter-from,
@@ -492,13 +490,6 @@ onMounted(async () => {
 
 .modal-slide-enter-from .relative,
 .modal-slide-leave-to .relative {
-  transform: translateY(100%);
-}
-
-@media (min-width: 640px) {
-  .modal-slide-enter-from .relative,
-  .modal-slide-leave-to .relative {
-    transform: scale(0.95) translateY(10px);
-  }
+  transform: scale(0.9) translateY(10px);
 }
 </style>
