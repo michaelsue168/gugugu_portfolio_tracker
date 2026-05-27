@@ -106,7 +106,17 @@ export function calculatePositions(
   // 計算每個 Position 的市值與未實現損益
   for (const code in positions) {
     const pos = positions[code];
-    pos.current_price = priceMap[code] ?? pos.current_price ?? 0;
+    const rawPrice = priceMap[code] ?? 0;
+    
+    if (rawPrice <= 0) {
+      // 獲取價格失敗，設定現價為平均持股成本 (若無持股成本，則用第一筆交易價格作為 fallback)
+      const fallbackPrice = pos.average_cost || (pos.transactions[0]?.price) || 0;
+      pos.current_price = fallbackPrice;
+      pos.price_fetch_failed = true;
+    } else {
+      pos.current_price = rawPrice;
+      pos.price_fetch_failed = false;
+    }
     
     if (pos.shares > 0) {
       pos.market_value = pos.shares * pos.current_price;

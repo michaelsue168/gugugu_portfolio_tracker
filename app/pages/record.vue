@@ -154,17 +154,12 @@
 
         <!-- 交易日期與備註 -->
         <div class="grid grid-cols-2 gap-3">
-          <div :class="[selectedType === 'DISCOUNT' ? 'col-span-2' : '']">
+          <div :class="[(selectedType === 'BUY' || selectedType === 'SELL' || selectedType === 'DISCOUNT') ? 'col-span-2' : 'col-span-1']">
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">交易日期</label>
-            <input 
-              v-model="form.date" 
-              type="date" 
-              required 
-              class="w-full bg-slate-950/50 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2 px-3 text-xs text-white focus:outline-none font-mono"
-            />
+            <WheelDatePicker v-model="form.date" />
           </div>
 
-          <div v-if="selectedType !== 'DISCOUNT'" class="col-span-1">
+          <div v-if="selectedType === 'DIVIDEND' || selectedType === 'BONUS_SHARES'" class="col-span-1">
             <!-- 股息或配股手續費(如匯費) -->
             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
               {{ selectedType === 'DIVIDEND' ? '匯費 / 扣稅' : '手續費 (其他)' }}
@@ -173,7 +168,7 @@
               v-model.number="form.fee" 
               type="number" 
               placeholder="0"
-              class="w-full bg-slate-950/50 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2 px-3 text-xs text-white focus:outline-none font-mono"
+              class="w-full bg-slate-950/50 border border-slate-850 focus:border-rose-500/80 rounded-xl py-3 px-3 text-xs text-white focus:outline-none font-mono"
             />
           </div>
         </div>
@@ -196,7 +191,7 @@
           class="w-full mt-3 py-3 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white text-xs font-bold rounded-xl transition-all duration-300 shadow-lg shadow-rose-500/10 hover:shadow-rose-500/20 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
         >
           <span v-if="submitting" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          <span>寫入資料庫</span>
+          <span>儲存</span>
         </button>
 
       </form>
@@ -243,7 +238,7 @@ const typeOptions = [
 ];
 
 const selectedType = ref('BUY');
-const brokerDiscount = ref(0.28); // 預設 2.8 折
+const brokerDiscount = ref(1.0); // 預設無折扣 (10折)
 const submitting = ref(false);
 
 // 表單值 Ref

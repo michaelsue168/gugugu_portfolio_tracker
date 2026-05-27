@@ -56,7 +56,7 @@
             </div>
           </div>
 
-          <!-- 右側數值與刪除按鈕 -->
+          <!-- 右側數值與刪除/編輯按鈕 -->
           <div class="flex items-center gap-3">
             <div class="text-right font-mono">
               <!-- 顯示詳細算式數值 -->
@@ -71,26 +71,183 @@
               </p>
             </div>
 
-            <!-- 🗑️ 刪除流水帳按鈕 -->
-            <button 
-              @click="deleteItem(item)"
-              class="p-2 rounded-xl bg-slate-850/50 hover:bg-rose-950/30 text-slate-500 hover:text-rose-400 border border-slate-800/30 hover:border-rose-900/50 transition-all duration-300"
-              title="刪除此紀錄"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-            </button>
+            <div class="flex items-center gap-1.5">
+              <!-- ✏️ 編輯流水帳按鈕 -->
+              <button 
+                @click="openEditModal(item)"
+                class="p-2 rounded-xl bg-slate-850/50 hover:bg-amber-950/30 text-slate-500 hover:text-amber-400 border border-slate-800/30 hover:border-amber-900/50 transition-all duration-300"
+                title="編輯此紀錄"
+              >
+                <Pencil class="w-3.5 h-3.5" />
+              </button>
+
+              <!-- 🗑️ 刪除流水帳按鈕 -->
+              <button 
+                @click="deleteItem(item)"
+                class="p-2 rounded-xl bg-slate-850/50 hover:bg-rose-950/30 text-slate-500 hover:text-rose-400 border border-slate-800/30 hover:border-rose-900/50 transition-all duration-300"
+                title="刪除此紀錄"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ✏️ 編輯交易/折讓對話框 (Bottom Sheet Modal) -->
+    <transition name="modal-slide">
+      <div v-if="showEditModal && editingItem" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4">
+        <!-- 遮罩背景 -->
+        <div @click="closeEditModal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity"></div>
+        
+        <!-- 視窗卡片 -->
+        <div class="relative bg-slate-900 border-t sm:border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto z-10 transform transition-all select-none">
+          <!-- 頂部拖曳把手 (手機端視覺) -->
+          <div class="w-10 h-1 bg-slate-800 rounded-full mx-auto sm:hidden mb-2"></div>
+          
+          <div class="flex justify-between items-center pb-2 border-b border-slate-850">
+            <div>
+              <h3 class="text-sm font-bold text-white">編輯{{ editingItem.isTransaction ? '交易' : '折讓' }}紀錄</h3>
+              <p class="text-[9px] text-slate-500 mt-0.5">
+                修改後系統將自動即時重新計算持股與總資產成本
+              </p>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[8px] font-bold tracking-wider" :class="[getLabelClass(editingItem)]">
+              {{ formatAction(editingItem.action || editingItem.type) }}
+            </span>
+          </div>
+
+          <form @submit.prevent="saveEdit" class="space-y-4">
+            <!-- 唯讀資訊：個股代號名稱 (折讓類型不顯示) -->
+            <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-850">
+              <div>
+                <span class="block text-[8px] font-bold text-slate-500 uppercase font-mono">股票代號</span>
+                <span class="text-xs text-slate-300 font-mono font-bold">{{ editingItem.stock_code }}</span>
+              </div>
+              <div>
+                <span class="block text-[8px] font-bold text-slate-500 uppercase font-mono">股票名稱</span>
+                <span class="text-xs text-slate-300 font-bold">{{ editingItem.stock_name }}</span>
+              </div>
+            </div>
+
+            <!-- 可編輯欄位：日期 (採用滾輪式選取器) -->
+            <div>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">交易日期</label>
+              <WheelDatePicker v-model="editingItem.date" />
+            </div>
+
+            <!-- 交易類型 (單價與股數) -->
+            <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3">
+              <!-- 單價 (買進/賣出/股息需要) -->
+              <div v-if="editingItem.action === 'BUY' || editingItem.action === 'SELL' || editingItem.action === 'DIVIDEND'">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  {{ editingItem.action === 'DIVIDEND' ? '每股配息金額' : '單價 (股價)' }}
+                </label>
+                <input 
+                  v-model.number="editingItem.price" 
+                  type="number" 
+                  step="any" 
+                  required 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none font-mono"
+                />
+              </div>
+
+              <!-- 股數 / 持股數 -->
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  {{ editingItem.action === 'DIVIDEND' ? '除息時持股數' : editingItem.action === 'BONUS_SHARES' ? '配股股數' : '交易股數' }}
+                </label>
+                <input 
+                  v-model.number="editingItem.shares" 
+                  type="number" 
+                  required 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <!-- 手續費與稅金 (交易類型) -->
+            <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3">
+              <!-- 費 -->
+              <div v-if="editingItem.action === 'BUY' || editingItem.action === 'SELL' || editingItem.action === 'DIVIDEND'">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  {{ editingItem.action === 'DIVIDEND' ? '匯費 / 扣稅' : '手續費淨額' }}
+                </label>
+                <input 
+                  v-model.number="editingItem.fee" 
+                  type="number" 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none font-mono"
+                />
+              </div>
+
+              <!-- 稅 (僅賣出有) -->
+              <div v-if="editingItem.action === 'SELL'">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">證券交易稅</label>
+                <input 
+                  v-model.number="editingItem.tax" 
+                  type="number" 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none font-mono"
+                />
+              </div>
+            </div>
+
+            <!-- 折讓欄位：金額與備註 (DISCOUNT 類型) -->
+            <div v-if="!editingItem.isTransaction" class="space-y-3.5">
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">折讓 / 退佣金額</label>
+                <input 
+                  v-model.number="editingItem.amount" 
+                  type="number" 
+                  required 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none font-mono"
+                />
+              </div>
+              <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">備註說明</label>
+                <input 
+                  v-model="editingItem.note" 
+                  type="text" 
+                  class="w-full bg-slate-950/60 border border-slate-850 focus:border-rose-500/80 rounded-xl py-2.5 px-3 text-xs text-white focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="grid grid-cols-2 gap-3 pt-3">
+              <button 
+                type="button" 
+                @click="closeEditModal"
+                class="py-3 bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold rounded-xl transition-all border border-slate-800"
+              >
+                取消
+              </button>
+              <button 
+                type="submit" 
+                :disabled="editSubmitting"
+                class="py-3 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-rose-500/10 flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <span v-if="editSubmitting" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span>儲存修改</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { History as HistoryIcon, Trash2 } from 'lucide-vue-next';
+import { History as HistoryIcon, Trash2, Pencil } from 'lucide-vue-next';
 
 const portfolio = usePortfolio();
 const supabase = useSupabaseClient();
+
+// 編輯 Modal 狀態與變數
+const showEditModal = ref(false);
+const editSubmitting = ref(false);
+const editingItem = ref<any>(null);
 
 // 合併 transactions 與 cash_flows 為一個時間軸列表 (由新至舊)
 const sortedTimeline = computed(() => {
@@ -151,6 +308,7 @@ function getBarBgClass(item: any): string {
 
 // 標籤樣式
 function getLabelClass(item: any): string {
+  if (!item) return 'bg-slate-800 text-slate-400';
   if (!item.isTransaction) return 'bg-purple-500/10 text-purple-400';
   switch (item.action) {
     case 'BUY': return 'bg-rose-500/10 text-rose-400';
@@ -205,6 +363,79 @@ function getValueString(item: any): string {
   }
 }
 
+// 開啟編輯彈出對話框
+function openEditModal(item: any) {
+  editingItem.value = {
+    ...item,
+    date: item.date
+  };
+  
+  if (item.isTransaction) {
+    editingItem.value.price = Number(item.price);
+    // 在前端編輯一律呈現正股數，存檔時會根據 BUY/SELL 自動附加正負號
+    editingItem.value.shares = Math.abs(Number(item.shares));
+    editingItem.value.fee = Number(item.fee);
+    editingItem.value.tax = Number(item.tax);
+  } else {
+    editingItem.value.amount = Number(item.amount);
+    editingItem.value.note = item.note || '';
+  }
+  showEditModal.value = true;
+}
+
+// 關閉編輯對話框
+function closeEditModal() {
+  showEditModal.value = false;
+  editingItem.value = null;
+}
+
+// 儲存編輯修改
+async function saveEdit() {
+  if (!editingItem.value) return;
+  editSubmitting.value = true;
+  try {
+    if (editingItem.value.isTransaction) {
+      // 買進股數為正，賣出股數為負
+      const calculatedShares = editingItem.value.action === 'SELL' 
+        ? -Math.abs(editingItem.value.shares || 0) 
+        : Math.abs(editingItem.value.shares || 0);
+
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          price: Number(editingItem.value.price) || 0,
+          shares: calculatedShares,
+          fee: Number(editingItem.value.fee) || 0,
+          tax: Number(editingItem.value.tax) || 0,
+          transaction_date: editingItem.value.date
+        })
+        .eq('id', editingItem.value.id);
+      
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('cash_flows')
+        .update({
+          amount: Number(editingItem.value.amount) || 0,
+          note: editingItem.value.note || '折讓收入',
+          record_date: editingItem.value.date
+        })
+        .eq('id', editingItem.value.id);
+      
+      if (error) throw error;
+    }
+
+    closeEditModal();
+    // 重新讀取資產資料，讓所有持股均價與帳戶資產重整
+    await portfolio.fetchData();
+  } catch (err: any) {
+    console.error('儲存修改失敗：', err);
+    alert('儲存修改失敗：' + (err.message || '未知錯誤'));
+  } finally {
+    editSubmitting.value = false;
+  }
+}
+
 // 刪除交易或現金流
 async function deleteItem(item: any) {
   const confirmMsg = item.isTransaction
@@ -241,3 +472,33 @@ onMounted(async () => {
   await portfolio.fetchData();
 });
 </script>
+
+<style scoped>
+/* Modal 抽屜滑動與淡入動畫 */
+.modal-slide-enter-active,
+.modal-slide-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-slide-enter-active .relative,
+.modal-slide-leave-active .relative {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-slide-enter-from,
+.modal-slide-leave-to {
+  opacity: 0;
+}
+
+.modal-slide-enter-from .relative,
+.modal-slide-leave-to .relative {
+  transform: translateY(100%);
+}
+
+@media (min-width: 640px) {
+  .modal-slide-enter-from .relative,
+  .modal-slide-leave-to .relative {
+    transform: scale(0.95) translateY(10px);
+  }
+}
+</style>

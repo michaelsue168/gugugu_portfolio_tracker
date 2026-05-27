@@ -143,12 +143,17 @@
 
             <div class="text-right">
               <p class="text-xs font-bold font-mono text-slate-200">${{ formatNumber(pos.market_value) }}</p>
-              <span 
-                class="text-[9px] font-bold font-mono px-2 py-0.5 rounded-full inline-block mt-1"
-                :class="[pos.unrealized_gain >= 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400']"
-              >
-                {{ pos.unrealized_gain >= 0 ? '+' : '' }}{{ pos.unrealized_roi.toFixed(1) }}%
-              </span>
+              <div class="flex items-center justify-end gap-1 mt-1 font-mono flex-wrap">
+                <span v-if="pos.price_fetch_failed" class="text-[8px] text-amber-400 font-bold bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/15">
+                  獲取失敗
+                </span>
+                <span 
+                  class="text-[9px] font-bold font-mono px-2 py-0.5 rounded-full inline-block"
+                  :class="[pos.unrealized_gain >= 0 ? 'bg-rose-500/10 text-rose-400' : 'bg-emerald-500/10 text-emerald-400']"
+                >
+                  {{ pos.unrealized_gain >= 0 ? '+' : '' }}{{ pos.unrealized_roi.toFixed(1) }}%
+                </span>
+              </div>
             </div>
           </NuxtLink>
         </div>

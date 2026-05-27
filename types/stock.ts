@@ -45,6 +45,7 @@ export interface Position {
   realized_gain: number;     // Total realized gain from selling this stock historically
   dividend_received: number; // Total cash dividend received from this stock historically
   transactions: Transaction[]; // Associated transactions (sorted by date)
+  price_fetch_failed?: boolean; // True if real stock price failed to fetch
 }
 
 export interface PortfolioSummary {

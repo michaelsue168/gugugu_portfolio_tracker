@@ -76,7 +76,10 @@
               <p class="text-xs font-bold font-mono text-slate-200">
                 ${{ formatNumber(pos.market_value) }}
               </p>
-              <div class="flex items-center justify-end gap-1 mt-1 font-mono">
+              <div class="flex items-center justify-end gap-1.5 mt-1 font-mono flex-wrap">
+                <span v-if="pos.price_fetch_failed" class="text-[8px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/15">
+                  獲取失敗
+                </span>
                 <!-- 台股邏輯：紅色為獲利、綠色為虧損 -->
                 <span 
                   class="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -99,7 +102,13 @@
               <div class="grid grid-cols-2 gap-3 py-3 border-b border-slate-800/40 text-[10px] text-slate-400">
                 <div>
                   <p>持股總成本：<span class="font-bold text-slate-300 font-mono">${{ formatNumber(pos.total_cost) }}</span></p>
-                  <p class="mt-1">當前股票現價：<span class="font-bold text-slate-300 font-mono">${{ pos.current_price.toFixed(1) }}</span></p>
+                  <p class="mt-1 flex items-center gap-1 flex-wrap">
+                    當前股票現價：
+                    <span class="font-bold text-slate-300 font-mono">${{ pos.current_price.toFixed(1) }}</span>
+                    <span v-if="pos.price_fetch_failed" class="px-1 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[8px] font-bold border border-amber-500/20">
+                      ⚠️ 獲取失敗 (暫以成本計算)
+                    </span>
+                  </p>
                 </div>
                 <div>
                   <p>未實現損益：

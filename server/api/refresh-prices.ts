@@ -1,20 +1,33 @@
 import { serverSupabaseClient } from '#supabase/server';
 
-// 常用台股模擬參考價基底
-const STOCK_PRICE_BASES: Record<string, { name: string; base: number; range: number }> = {
-  '2330': { name: '台積電', base: 820, range: 30 },
-  '2317': { name: '鴻海', base: 178, range: 10 },
-  '2454': { name: '聯發科', base: 1150, range: 40 },
-  '2308': { name: '台達電', base: 330, range: 15 },
-  '2881': { name: '富邦金', base: 73, range: 4 },
-  '2882': { name: '國泰金', base: 53, range: 3 },
-  '2603': { name: '長榮', base: 168, range: 10 },
-  '0050': { name: '元大台灣50', base: 155, range: 6 },
-  '0056': { name: '元大高股息', base: 38, range: 2 },
-  '00878': { name: '國泰永續高股息', base: 21, range: 1 },
-  '00919': { name: '群益台灣精選高息', base: 25, range: 1.5 },
-  '00929': { name: '復華台灣科技優息', base: 20, range: 1.2 }
-};
+/**
+ * 從 Yahoo Finance 抓取真實現價
+ * 優先嘗試上市 (.TW)，若失敗則嘗試上櫃 (.TWO)
+ */
+async function fetchYahooStockPrice(code: string): Promise<number | null> {
+  const suffixes = ['.TW', '.TWO'];
+  for (const suffix of suffixes) {
+    const symbol = `${code}${suffix}`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (res.ok) {
+        const json: any = await res.json();
+        const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if (price !== undefined && price !== null && typeof price === 'number') {
+          return price;
+        }
+      }
+    } catch (err) {
+      console.error(`Error fetching Yahoo price for ${symbol}:`, err);
+    }
+  }
+  return null;
+}
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event);
@@ -42,30 +55,25 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 預設為空的個股時，至少提供台積電作為預設快取
+    // 預設為空的個股時，至少提供台積電作為預設
     if (Object.keys(stockMap).length === 0) {
       stockMap['2330'] = '台積電';
     }
 
-    // 3. 遍歷並為每檔個股生成最新價格
+    // 3. 遍歷並為每檔個股從 Yahoo Finance 抓取真實現價
     const refreshResults: any[] = [];
     const nowISO = new Date().toISOString();
 
     for (const code in stockMap) {
       const name = stockMap[code];
-      let currentPrice = 50.0; // 預設底價
+      let currentPrice = 0.0; // 預設 0.0 代表獲取失敗
 
-      if (STOCK_PRICE_BASES[code]) {
-        // 在基準價與隨機波動範圍內計算 (模擬真實交易盤中變動)
-        const config = STOCK_PRICE_BASES[code];
-        const variance = (Math.random() - 0.5) * config.range;
-        currentPrice = Number((config.base + variance).toFixed(2));
+      // 抓取真實現價
+      const realPrice = await fetchYahooStockPrice(code);
+      if (realPrice !== null && realPrice > 0) {
+        currentPrice = Number(realPrice.toFixed(2));
       } else {
-        // 未設定基準的股票，給予隨機 NT$10 ~ NT$300 之間的合理價格
-        const hash = code.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-        const base = 10 + (hash % 290);
-        const variance = (Math.random() - 0.5) * (base * 0.1); // 10% 波動
-        currentPrice = Number((base + variance).toFixed(2));
+        currentPrice = 0.0; // 獲取失敗寫入 0.0
       }
 
       // 4. 將現價寫入或更新 (Upsert) 到 stock_prices 快取表中
@@ -81,7 +89,12 @@ export default defineEventHandler(async (event) => {
       if (upsertError) {
         console.error(`更新現價快取失敗 ${code}:`, upsertError.message);
       } else {
-        refreshResults.push({ code, name, price: currentPrice });
+        refreshResults.push({ 
+          code, 
+          name, 
+          price: currentPrice, 
+          fetchFailed: currentPrice === 0 
+        });
       }
     }
 
