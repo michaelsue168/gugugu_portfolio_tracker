@@ -8,7 +8,10 @@
 
     <div v-else class="space-y-6">
       <!-- 總資產頂級發光卡片 -->
-      <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+      <div 
+        class="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 shadow-2xl isolate"
+        style="transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden;"
+      >
         <!-- 裝飾背景發光 -->
         <div class="absolute -right-16 -top-16 w-36 h-36 bg-rose-500/10 rounded-full blur-2xl pointer-events-none"></div>
 

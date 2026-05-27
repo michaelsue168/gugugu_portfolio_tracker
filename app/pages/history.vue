@@ -102,7 +102,7 @@
         <div @click="closeEditModal" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm transition-opacity"></div>
         
         <!-- 視窗卡片 -->
-        <div class="relative bg-slate-900 border-t sm:border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto z-10 transform transition-all select-none">
+        <div class="relative bg-slate-900 border-t sm:border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl px-5 pt-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:pb-5 space-y-4 max-h-[90vh] overflow-y-auto z-10 transform transition-all select-none">
           <!-- 頂部拖曳把手 (手機端視覺) -->
           <div class="w-10 h-1 bg-slate-800 rounded-full mx-auto sm:hidden mb-2"></div>
           
