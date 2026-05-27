@@ -137,7 +137,7 @@
               </div>
               <div>
                 <p class="text-xs font-bold text-slate-200">{{ pos.stock_name }}</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">{{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }}</p>
+                <p class="text-[10px] text-slate-500 mt-0.5">{{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }} | 現價 ${{ pos.current_price.toFixed(1) }}</p>
               </div>
             </div>
 

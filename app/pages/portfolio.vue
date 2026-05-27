@@ -127,15 +127,21 @@
               <div class="flex gap-2 py-3 border-b border-slate-800/40">
                 <button 
                   @click="quickRecord(pos, 'BUY')"
-                  class="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 hover:border-rose-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
+                  class="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 hover:border-rose-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-0.5 active:scale-[0.98]"
                 >
-                  ➕ 快速買進
+                  買進
                 </button>
                 <button 
                   @click="quickRecord(pos, 'SELL')"
-                  class="flex-1 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 active:scale-[0.98]"
+                  class="flex-1 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-0.5 active:scale-[0.98]"
                 >
-                  ➖ 快速賣出
+                  賣出
+                </button>
+                <button 
+                  @click="quickRecord(pos, 'DIVIDEND')"
+                  class="flex-1 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 hover:border-amber-500/50 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-0.5 active:scale-[0.98]"
+                >
+                  新增股息
                 </button>
               </div>
 
