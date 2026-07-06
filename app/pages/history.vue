@@ -4,7 +4,7 @@
     <div class="px-1 flex justify-between items-center">
       <div>
         <h2 class="text-lg font-bold text-white">交易明細流水帳</h2>
-        <p class="text-[10px] text-slate-500 font-light font-mono mt-0.5">
+        <p class="text-xs text-slate-400 font-light font-mono mt-0.5">
           <span v-if="searchQuery || selectedAction !== 'ALL' || selectedStockFilter !== 'ALL'">
             已篩選 {{ filteredTimeline.length }} 筆 / 共 {{ sortedTimeline.length }} 筆歷史紀錄
           </span>
@@ -16,9 +16,9 @@
     </div>
 
     <!-- 搜尋與篩選列 -->
-    <div v-if="!portfolio.loading.value && sortedTimeline.length > 0" class="space-y-2.5 px-0.5">
+    <div v-if="!portfolio.loading.value && sortedTimeline.length > 0" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-0.5">
       <!-- 搜尋關鍵字 & 股票下拉選單 -->
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-1 max-w-md">
         <!-- 關鍵字搜尋 -->
         <div class="relative flex-1">
           <input 
@@ -50,7 +50,7 @@
       </div>
 
       <!-- 類別橫向滑動選單 (Type Filter Pills) -->
-      <div class="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5 -mx-4 px-4 select-none">
+      <div class="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5 -mx-4 px-4 select-none md:overflow-x-visible md:flex-wrap md:-mx-0 md:px-0">
         <button 
           v-for="pill in filterPills" 
           :key="pill.value"
@@ -73,98 +73,130 @@
       <p class="text-xs text-slate-400 font-light">正在讀取明細紀錄...</p>
     </div>
 
-    <div v-else class="space-y-3">
-      <!-- 流水帳為空提示 -->
-      <div v-if="sortedTimeline.length === 0" class="bg-slate-900/30 border border-slate-800/80 rounded-3xl p-12 text-center">
-        <HistoryIcon class="w-10 h-10 mx-auto mb-3 text-slate-700" />
-        <h3 class="text-sm font-bold text-slate-400">目前無交易歷史明細</h3>
-        <p class="text-xs text-slate-500 mt-1 max-w-[200px] mx-auto leading-relaxed">
-          當您在「新增」頁面寫入買進、賣出、股利或折讓紀錄後，這裡將會呈現您完整的資產帳簿。
-        </p>
-      </div>
-
-      <!-- 篩選結果為空提示 -->
-      <div v-else-if="filteredTimeline.length === 0" class="bg-slate-900/25 border border-slate-850/50 rounded-2xl p-10 text-center space-y-3.5">
-        <Search class="w-8 h-8 mx-auto text-slate-650 animate-pulse" />
-        <div>
-          <h3 class="text-xs font-bold text-slate-400">查無相符的交易明細</h3>
-          <p class="text-[10px] text-slate-500 mt-1 max-w-[220px] mx-auto leading-relaxed">
-            請嘗試調整關鍵字搜尋、更改個股下拉選單，或切換其他交易類型。
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- 列表區域 (佔 8 欄) -->
+      <div class="lg:col-span-8 space-y-3">
+        <!-- 流水帳為空提示 -->
+        <div v-if="sortedTimeline.length === 0" class="bg-slate-900/30 border border-slate-800/80 rounded-3xl p-12 text-center">
+          <HistoryIcon class="w-10 h-10 mx-auto mb-3 text-slate-700" />
+          <h3 class="text-sm font-bold text-slate-400">目前無交易歷史明細</h3>
+          <p class="text-xs text-slate-500 mt-1 max-w-[200px] mx-auto leading-relaxed">
+            當您在「新增」頁面寫入買進、賣出、股利或折讓紀錄後，這裡將會呈現您完整的資產帳簿。
           </p>
         </div>
-        <button 
-          @click="clearFilters"
-          type="button"
-          class="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white text-[10px] font-bold rounded-xl transition-all border border-slate-800"
-        >
-          重設篩選條件
-        </button>
-      </div>
 
-      <!-- 流水帳列表卡片 -->
-      <div v-else class="space-y-2.5">
-        <div 
-          v-for="item in filteredTimeline" 
-          :key="item.timelineId"
-          class="bg-slate-900/40 backdrop-blur-sm border border-slate-850/60 rounded-2xl p-3.5 flex justify-between items-center relative overflow-hidden transition-all duration-300 hover:border-slate-750"
-          :class="[getBorderClass(item)]"
-        >
-          <!-- 左側資訊 (類型、日期、個股代號名稱) -->
-          <div class="flex items-center gap-3">
-            <!-- 左側醒目顏色邊線 -->
-            <div class="absolute left-0 top-0 bottom-0 w-1" :class="[getBarBgClass(item)]"></div>
-            
-            <div>
-              <div class="flex items-center gap-2">
-                <span 
-                  class="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider"
-                  :class="[getLabelClass(item)]"
-                >
-                  {{ formatAction(item.action || item.type) }}
-                </span>
-                <span class="text-[10px] text-slate-500 font-mono font-medium">{{ item.date }}</span>
+        <!-- 篩選結果為空提示 -->
+        <div v-else-if="filteredTimeline.length === 0" class="bg-slate-900/25 border border-slate-850/50 rounded-2xl p-10 text-center space-y-3.5">
+          <Search class="w-8 h-8 mx-auto text-slate-650 animate-pulse" />
+          <div>
+            <h3 class="text-xs font-bold text-slate-400">查無相符的交易明細</h3>
+            <p class="text-[10px] text-slate-500 mt-1 max-w-[220px] mx-auto leading-relaxed">
+              請嘗試調整關鍵字搜尋、更改個股下拉選單，或切換其他交易類型。
+            </p>
+          </div>
+          <button 
+            @click="clearFilters"
+            type="button"
+            class="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white text-[10px] font-bold rounded-xl transition-all border border-slate-800"
+          >
+            重設篩選條件
+          </button>
+        </div>
+
+        <!-- 流水帳列表卡片 -->
+        <div v-else class="space-y-2.5">
+          <div 
+            v-for="item in filteredTimeline" 
+            :key="item.timelineId"
+            class="bg-slate-900/40 backdrop-blur-sm border border-slate-850/60 rounded-2xl p-3.5 flex justify-between items-center relative overflow-hidden transition-all duration-300 hover:border-slate-750"
+            :class="[getBorderClass(item)]"
+          >
+            <!-- 左側資訊 (類型、日期、個股代號名稱) -->
+            <div class="flex items-center gap-3">
+              <!-- 左側醒目顏色邊線 -->
+              <div class="absolute left-0 top-0 bottom-0 w-1" :class="[getBarBgClass(item)]"></div>
+              
+              <div>
+                <div class="flex items-center gap-2">
+                  <span 
+                    class="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider"
+                    :class="[getLabelClass(item)]"
+                  >
+                    {{ formatAction(item.action || item.type) }}
+                  </span>
+                  <span class="text-xs text-slate-400 font-mono font-medium">{{ item.date }}</span>
+                </div>
+
+                <h4 class="text-xs font-bold text-white mt-1">
+                  {{ item.stock_code ? `${item.stock_code} ${item.stock_name}` : item.note }}
+                </h4>
+              </div>
+            </div>
+
+            <!-- 右側數值與刪除/編輯按鈕 -->
+            <div class="flex items-center gap-3">
+              <div class="text-right font-mono">
+                <!-- 顯示詳細算式數值 -->
+                <p class="text-xs font-bold text-slate-200" :class="[getValueClass(item)]">
+                  {{ getValueString(item) }}
+                </p>
+                
+                <!-- 顯示手續費與稅金細節 (折讓不顯示) -->
+                <p v-if="item.stock_code" class="text-[11px] text-slate-400 mt-0.5">
+                  <span v-if="item.fee">費:${{ item.fee }}</span>
+                  <span v-if="item.tax"> 稅:${{ item.tax }}</span>
+                </p>
               </div>
 
-              <h4 class="text-xs font-bold text-white mt-1">
-                {{ item.stock_code ? `${item.stock_code} ${item.stock_name}` : item.note }}
-              </h4>
+              <div class="flex items-center gap-1.5">
+                <!-- ✏️ 編輯流水帳按鈕 -->
+                <button 
+                  @click="openEditModal(item)"
+                  class="p-2 rounded-xl bg-slate-850/50 hover:bg-amber-950/30 text-slate-500 hover:text-amber-400 border border-slate-800/30 hover:border-rose-950/20 hover:border-amber-900/50 transition-all duration-300"
+                  title="編輯此紀錄"
+                >
+                  <Pencil class="w-3.5 h-3.5" />
+                </button>
+
+                <!-- 🗑️ 刪除流水帳按鈕 -->
+                <button 
+                  @click="deleteItem(item)"
+                  class="p-2 rounded-xl bg-slate-850/50 hover:bg-rose-950/30 text-slate-500 hover:text-rose-400 border border-slate-800/30 hover:border-rose-900/50 transition-all duration-300"
+                  title="刪除此紀錄"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- 右側數值與刪除/編輯按鈕 -->
-          <div class="flex items-center gap-3">
-            <div class="text-right font-mono">
-              <!-- 顯示詳細算式數值 -->
-              <p class="text-xs font-bold text-slate-200" :class="[getValueClass(item)]">
-                {{ getValueString(item) }}
-              </p>
-              
-              <!-- 顯示手續費與稅金細節 (折讓不顯示) -->
-              <p v-if="item.stock_code" class="text-[9px] text-slate-500 mt-0.5">
-                <span v-if="item.fee">費:${{ item.fee }}</span>
-                <span v-if="item.tax"> 稅:${{ item.tax }}</span>
-              </p>
-            </div>
-
-            <div class="flex items-center gap-1.5">
-              <!-- ✏️ 編輯流水帳按鈕 -->
-              <button 
-                @click="openEditModal(item)"
-                class="p-2 rounded-xl bg-slate-850/50 hover:bg-amber-950/30 text-slate-500 hover:text-amber-400 border border-slate-800/30 hover:border-amber-900/50 transition-all duration-300"
-                title="編輯此紀錄"
-              >
-                <Pencil class="w-3.5 h-3.5" />
-              </button>
-
-              <!-- 🗑️ 刪除流水帳按鈕 -->
-              <button 
-                @click="deleteItem(item)"
-                class="p-2 rounded-xl bg-slate-850/50 hover:bg-rose-950/30 text-slate-500 hover:text-rose-400 border border-slate-800/30 hover:border-rose-900/50 transition-all duration-300"
-                title="刪除此紀錄"
-              >
-                <Trash2 class="w-3.5 h-3.5" />
-              </button>
-            </div>
+      <!-- 右側側邊欄：歷史統計摘要 (僅大螢幕 lg 以上顯示，佔 4 欄) -->
+      <div class="hidden lg:block lg:col-span-4 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-3xl p-5 space-y-4">
+        <h3 class="text-xs font-bold text-slate-300 tracking-wider">歷史統計摘要</h3>
+        
+        <div class="space-y-3.5 font-mono">
+          <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
+            <span class="text-xs text-slate-400 font-sans">累計已領股息</span>
+            <span class="text-xs font-bold text-amber-400">${{ formatNumber(portfolio.summary.value.total_dividend) }}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
+            <span class="text-xs text-slate-400 font-sans">累計折讓退佣</span>
+            <span class="text-xs font-bold text-purple-400">${{ formatNumber(portfolio.summary.value.total_cash_flow) }}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
+            <span class="text-xs text-slate-400 font-sans">歷史已實現損益</span>
+            <span 
+              class="text-xs font-bold"
+              :class="[portfolio.summary.value.total_realized_gain >= 0 ? 'text-rose-400' : 'text-emerald-400']"
+            >
+              ${{ formatNumber(portfolio.summary.value.total_realized_gain) }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center py-2">
+            <span class="text-xs text-slate-400 font-sans">歷史紀錄筆數</span>
+            <span class="text-xs font-bold text-slate-200">{{ sortedTimeline.length }} 筆</span>
           </div>
         </div>
       </div>
@@ -196,18 +228,18 @@
               <!-- 唯讀資訊：個股代號名稱 (折讓類型不顯示) -->
               <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-850">
                 <div>
-                  <span class="block text-[8px] font-bold text-slate-500 uppercase font-mono">股票代號</span>
+                  <span class="block text-xs font-bold text-slate-400 uppercase font-mono">股票代號</span>
                   <span class="text-xs text-slate-300 font-mono font-bold">{{ editingItem.stock_code }}</span>
                 </div>
                 <div>
-                  <span class="block text-[8px] font-bold text-slate-500 uppercase font-mono">股票名稱</span>
+                  <span class="block text-xs font-bold text-slate-400 uppercase font-mono">股票名稱</span>
                   <span class="text-xs text-slate-300 font-bold">{{ editingItem.stock_name }}</span>
                 </div>
               </div>
 
               <!-- 可編輯欄位：日期 (採用滾輪式選取器) -->
               <div>
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">交易日期</label>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">交易日期</label>
                 <WheelDatePicker v-model="editingItem.date" />
               </div>
 
@@ -215,7 +247,7 @@
               <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3">
                 <!-- 單價 (買進/賣出/股息需要) -->
                 <div v-if="editingItem.action === 'BUY' || editingItem.action === 'SELL' || editingItem.action === 'DIVIDEND'">
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
                     {{ editingItem.action === 'DIVIDEND' ? '每股配息金額' : '單價 (股價)' }}
                   </label>
                   <input 
@@ -229,7 +261,7 @@
 
                 <!-- 股數 / 持股數 -->
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
                     {{ editingItem.action === 'DIVIDEND' ? '除息時持股數' : editingItem.action === 'BONUS_SHARES' ? '配股股數' : '交易股數' }}
                   </label>
                   <input 
@@ -245,7 +277,7 @@
               <div v-if="editingItem.isTransaction" class="grid grid-cols-2 gap-3">
                 <!-- 費 -->
                 <div v-if="editingItem.action === 'BUY' || editingItem.action === 'SELL' || editingItem.action === 'DIVIDEND'">
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
                     {{ editingItem.action === 'DIVIDEND' ? '匯費 / 扣稅' : '手續費淨額' }}
                   </label>
                   <input 
@@ -257,7 +289,7 @@
 
                 <!-- 稅 (僅賣出有) -->
                 <div v-if="editingItem.action === 'SELL'">
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">證券交易稅</label>
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">證券交易稅</label>
                   <input 
                     v-model.number="editingItem.tax" 
                     type="number" 
@@ -269,7 +301,7 @@
               <!-- 折讓欄位：金額與備註 (DISCOUNT 類型) -->
               <div v-if="!editingItem.isTransaction" class="space-y-3.5">
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">折讓 / 退佣金額</label>
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">折讓 / 退佣金額</label>
                   <input 
                     v-model.number="editingItem.amount" 
                     type="number" 
@@ -278,7 +310,7 @@
                   />
                 </div>
                 <div>
-                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">備註說明</label>
+                  <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">備註說明</label>
                   <input 
                     v-model="editingItem.note" 
                     type="text" 

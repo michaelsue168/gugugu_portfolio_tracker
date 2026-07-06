@@ -1,12 +1,12 @@
 <template>
-  <div class="space-y-5">
+  <div class="space-y-5 max-w-2xl mx-auto">
     <div class="px-1">
       <h2 class="text-lg font-bold text-white">記錄交易流水帳</h2>
-      <p class="text-[10px] text-slate-500 font-light">新增或維護您的買賣、配股配息及折讓歷史</p>
+      <p class="text-xs text-slate-400 font-light">新增或維護您的買賣、配股配息及折讓歷史</p>
     </div>
 
     <!-- 主要表單卡片 -->
-    <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-5 shadow-2xl relative overflow-hidden">
+    <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-5 md:p-8 shadow-2xl relative overflow-hidden">
       
       <!-- 頂部切換 Segmented Control -->
       <div class="bg-slate-950/80 p-1 rounded-xl border border-slate-850 flex mb-5 relative overflow-x-auto gap-0.5">
@@ -32,7 +32,7 @@
         <!-- 核心共用欄位：股票代號與名稱 (折讓類型不顯示) -->
         <div v-if="selectedType !== 'DISCOUNT'" class="grid grid-cols-2 gap-3 transition-opacity duration-300">
           <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">股票代號</label>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">股票代號</label>
             <input 
               v-model="form.stock_code" 
               type="text" 
@@ -43,7 +43,7 @@
             />
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">股票名稱</label>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">股票名稱</label>
             <input 
               v-model="form.stock_name" 
               type="text" 
@@ -58,7 +58,7 @@
         <div class="grid grid-cols-2 gap-3">
           <!-- 單價 (買進/賣出/股息需要) -->
           <div v-if="selectedType === 'BUY' || selectedType === 'SELL' || selectedType === 'DIVIDEND'">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
               {{ selectedType === 'DIVIDEND' ? '每股配息金額' : '單價 (股價)' }}
             </label>
             <input 
@@ -74,7 +74,7 @@
 
           <!-- 股數 / 金額 (折讓直接填金額) -->
           <div v-if="selectedType !== 'DISCOUNT'">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
               {{ selectedType === 'DIVIDEND' ? '除息時持股數' : selectedType === 'BONUS_SHARES' ? '配股股數' : '交易股數 (張=1000)' }}
             </label>
             <input 
@@ -89,7 +89,7 @@
 
           <!-- 折讓金額 (僅折讓需要) -->
           <div v-else class="col-span-2">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">折讓 / 退佣金額</label>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">折讓 / 退佣金額</label>
             <input 
               v-model.number="form.amount" 
               type="number" 
@@ -102,14 +102,14 @@
 
         <!-- 買賣手續費與折讓設定 -->
         <div v-if="selectedType === 'BUY' || selectedType === 'SELL'" class="bg-slate-950/40 p-3.5 border border-slate-850 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center text-[10px] text-slate-400">
+          <div class="flex justify-between items-center text-xs text-slate-300">
             <span class="font-bold">券商手續費預估</span>
-            <span class="font-mono text-slate-500">預設 0.1425% | 最低 NT$20</span>
+            <span class="font-mono text-slate-400">預設 0.1425% | 最低 NT$20</span>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">券商折扣 (折讓)</label>
+              <label class="block text-xs font-bold text-slate-400 uppercase mb-1">券商折扣 (折讓)</label>
               <select 
                 v-model="brokerDiscount" 
                 @change="calculateEstimates"
@@ -125,7 +125,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">手續費淨額</label>
+              <label class="block text-xs font-bold text-slate-400 uppercase mb-1">手續費淨額</label>
               <input 
                 v-model.number="form.fee" 
                 type="number" 
@@ -137,8 +137,8 @@
           <!-- 賣出時的證交稅 (台股賣出 0.3%，若為 ETF 則 0.1%) -->
           <div v-if="selectedType === 'SELL'" class="pt-2 border-t border-slate-800/40 grid grid-cols-2 gap-3 items-center">
             <div>
-              <span class="text-[9px] font-bold text-slate-500">證券交易稅預估</span>
-              <p class="text-[8px] text-slate-500/80 mt-0.5" id="tax-explanation">
+              <span class="text-xs font-bold text-slate-400">證券交易稅預估</span>
+              <p class="text-[10px] text-slate-400/90 mt-0.5" id="tax-explanation">
                 {{ isEtf ? '經判定為 ETF：按 0.1% 計算' : '普通股：按 0.3% 計算' }}
               </p>
             </div>
@@ -155,13 +155,13 @@
         <!-- 交易日期與備註 -->
         <div class="grid grid-cols-2 gap-3">
           <div :class="[(selectedType === 'BUY' || selectedType === 'SELL' || selectedType === 'DISCOUNT') ? 'col-span-2' : 'col-span-1']">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">交易日期</label>
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">交易日期</label>
             <WheelDatePicker v-model="form.date" />
           </div>
 
           <div v-if="selectedType === 'DIVIDEND' || selectedType === 'BONUS_SHARES'" class="col-span-1">
             <!-- 股息或配股手續費(如匯費) -->
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">
               {{ selectedType === 'DIVIDEND' ? '匯費 / 扣稅' : '手續費 (其他)' }}
             </label>
             <input 
@@ -175,7 +175,7 @@
 
         <!-- 獨立折讓的備註 -->
         <div v-if="selectedType === 'DISCOUNT'">
-          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 font-mono">備註說明</label>
+          <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 font-mono">備註說明</label>
           <input 
             v-model="form.note" 
             type="text" 

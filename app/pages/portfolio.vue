@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center px-1">
       <div>
         <h2 class="text-lg font-bold text-white">資產持股庫存</h2>
-        <p class="text-[10px] text-slate-500 font-light">
+        <p class="text-xs text-slate-400 font-light">
           共持有 {{ portfolio.activePositions.value.length }} 檔個股
         </p>
       </div>
@@ -40,7 +40,7 @@
       </div>
 
       <!-- 庫存列表卡片 -->
-      <div v-else class="space-y-3">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <div 
           v-for="pos in portfolio.activePositions.value" 
           :key="pos.stock_code"
@@ -65,7 +65,7 @@
                     :class="[expandedCard === pos.stock_code ? 'rotate-180 text-rose-400' : '']"
                   />
                 </div>
-                <p class="text-[10px] text-slate-500 mt-1 font-mono">
+                <p class="text-xs text-slate-400 mt-1 font-mono">
                   {{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }} | 現價 ${{ pos.current_price.toFixed(1) }}
                 </p>
               </div>
@@ -99,7 +99,7 @@
           >
             <div v-show="expandedCard === pos.stock_code" class="px-4 pb-4 border-t border-slate-800/40 bg-slate-950/20">
               <!-- 詳細庫存計算解析 -->
-              <div class="grid grid-cols-2 gap-3 py-3 border-b border-slate-800/40 text-[10px] text-slate-400">
+              <div class="grid grid-cols-2 gap-3 py-3 border-b border-slate-800/40 text-xs text-slate-300">
                 <div>
                   <p>持股總成本：<span class="font-bold text-slate-300 font-mono">${{ formatNumber(pos.total_cost) }}</span></p>
                   <p class="mt-1 flex items-center gap-1 flex-wrap">
@@ -147,12 +147,12 @@
 
               <!-- 個股關聯流水帳紀錄 -->
               <div class="mt-3">
-                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-mono">交易紀錄 (由舊至新)</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 font-mono">交易紀錄 (由舊至新)</p>
                 <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                   <div 
                     v-for="tx in pos.transactions" 
                     :key="tx.id"
-                    class="flex justify-between items-center p-2 bg-slate-950/40 border border-slate-850/50 rounded-xl text-[10px] text-slate-400"
+                    class="flex justify-between items-center p-2 bg-slate-950/40 border border-slate-850/50 rounded-xl text-xs text-slate-300"
                   >
                     <div class="flex items-center gap-2">
                       <span 
@@ -165,7 +165,7 @@
                       >
                         {{ formatAction(tx.action) }}
                       </span>
-                      <span class="font-mono text-[9px] text-slate-500">{{ tx.transaction_date }}</span>
+                      <span class="font-mono text-[11px] text-slate-400">{{ tx.transaction_date }}</span>
                     </div>
 
                     <div class="text-right font-mono">

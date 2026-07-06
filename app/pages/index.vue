@@ -6,110 +6,113 @@
       <p class="text-xs text-slate-400 font-light">正在同步雲端投資組合...</p>
     </div>
 
-    <div v-else class="space-y-6">
-      <!-- 總資產頂級發光卡片 -->
-      <div 
-        class="relative overflow-hidden border border-slate-800 rounded-3xl p-6 shadow-2xl isolate"
-        style="background: radial-gradient(circle at 100% 0%, rgba(244, 63, 94, 0.12), transparent 45%), linear-gradient(135deg, #0f172a 0%, #020617 100%); transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden; background-clip: padding-box; -webkit-mask-image: -webkit-radial-gradient(white, black);"
-      >
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- 左側：總資產與配置比例 (佔 7 欄) -->
+      <div class="lg:col-span-7 space-y-6">
+        <!-- 總資產頂級發光卡片 -->
+        <div 
+          class="relative overflow-hidden border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl isolate"
+          style="background: radial-gradient(circle at 100% 0%, rgba(244, 63, 94, 0.12), transparent 45%), linear-gradient(135deg, #0f172a 0%, #020617 100%); transform: translateZ(0); -webkit-backface-visibility: hidden; backface-visibility: hidden; background-clip: padding-box; -webkit-mask-image: -webkit-radial-gradient(white, black);"
+        >
 
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest font-mono">Total Assets Value / 總資產市值</p>
-        
-        <!-- GSAP 數字滾動顯示 -->
-        <h2 class="text-3xl font-extrabold tracking-tight mt-1.5 font-mono text-white flex items-baseline gap-1">
-          <span class="text-slate-500 text-lg font-light">$</span>
-          <span>{{ formatNumber(displayedTotalAssets) }}</span>
-        </h2>
+          <p class="text-xs font-semibold text-slate-300 uppercase tracking-widest font-mono">Total Assets Value / 總資產市值</p>
+          
+          <!-- GSAP 數字滾動顯示 -->
+          <h2 class="text-3xl font-extrabold tracking-tight mt-1.5 font-mono text-white flex items-baseline gap-1">
+            <span class="text-slate-500 text-lg font-light">$</span>
+            <span>{{ formatNumber(displayedTotalAssets) }}</span>
+          </h2>
 
-        <!-- 綜合損益區塊 (台股邏輯：紅升綠跌) -->
-        <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
-          <div>
-            <p class="text-[10px] text-slate-500 font-medium">綜合投資淨利 (含股息、折讓)</p>
-            <div 
-              class="text-base font-bold font-mono mt-0.5 flex items-center gap-1 transition-colors duration-300"
-              :class="[portfolio.summary.value.net_profit >= 0 ? 'text-rose-500' : 'text-emerald-500']"
-            >
-              <span>{{ portfolio.summary.value.net_profit >= 0 ? '▲ +' : '▼ -' }}</span>
-              <span>${{ formatNumber(Math.abs(displayedNetProfit)) }}</span>
+          <!-- 綜合損益區塊 (台股邏輯：紅升綠跌) -->
+          <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400 font-medium">綜合投資淨利 (含股息、折讓)</p>
+              <div 
+                class="text-base font-bold font-mono mt-0.5 flex items-center gap-1 transition-colors duration-300"
+                :class="[portfolio.summary.value.net_profit >= 0 ? 'text-rose-500' : 'text-emerald-500']"
+              >
+                <span>{{ portfolio.summary.value.net_profit >= 0 ? '▲ +' : '▼ -' }}</span>
+                <span>${{ formatNumber(Math.abs(displayedNetProfit)) }}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-slate-400 font-medium">未實現報酬率 (ROI)</p>
+              <div 
+                class="text-xs font-semibold font-mono mt-1 px-2.5 py-0.5 rounded-full inline-block"
+                :class="[portfolio.summary.value.unrealized_roi >= 0 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20']"
+              >
+                {{ portfolio.summary.value.unrealized_roi >= 0 ? '+' : '' }}{{ portfolio.summary.value.unrealized_roi.toFixed(2) }}%
+              </div>
             </div>
           </div>
-          <div class="text-right">
-            <p class="text-[10px] text-slate-500 font-medium">未實現報酬率 (ROI)</p>
+        </div>
+
+        <!-- 資產配置視覺化比例條 -->
+        <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 md:p-6 space-y-4">
+          <h3 class="text-xs font-bold text-slate-300 tracking-wider">資產配置比例</h3>
+          
+          <!-- 比例進度條 -->
+          <div class="h-3 rounded-full bg-slate-950 overflow-hidden flex">
             <div 
-              class="text-xs font-semibold font-mono mt-1 px-2.5 py-0.5 rounded-full inline-block"
-              :class="[portfolio.summary.value.unrealized_roi >= 0 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20']"
-            >
-              {{ portfolio.summary.value.unrealized_roi >= 0 ? '+' : '' }}{{ portfolio.summary.value.unrealized_roi.toFixed(2) }}%
+              class="h-full bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-500" 
+              :style="{ width: `${weights.stock}%` }"
+              title="持股市值"
+            ></div>
+            <div 
+              class="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-500" 
+              :style="{ width: `${weights.dividend}%` }"
+              title="股息收入"
+            ></div>
+            <div 
+              class="h-full bg-gradient-to-r from-sky-500 to-sky-600 transition-all duration-500" 
+              :style="{ width: `${weights.realized}%` }"
+              title="已實現利潤"
+            ></div>
+            <div 
+              class="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500" 
+              :style="{ width: `${weights.cashFlow}%` }"
+              title="退佣折讓"
+            ></div>
+          </div>
+
+          <!-- 比例圖例說明 -->
+          <div class="grid grid-cols-2 gap-3.5 pt-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded bg-rose-500"></span>
+              <div>
+                <p class="text-[11px] text-slate-400">當前持股市值</p>
+                <p class="text-xs font-bold font-mono">${{ formatNumber(portfolio.summary.value.total_market_value) }} ({{ weights.stock.toFixed(1) }}%)</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded bg-amber-500"></span>
+              <div>
+                <p class="text-[11px] text-slate-400">累計股息收入</p>
+                <p class="text-xs font-bold font-mono">${{ formatNumber(displayedDividend) }} ({{ weights.dividend.toFixed(1) }}%)</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded bg-sky-500"></span>
+              <div>
+                <p class="text-[11px] text-slate-400">歷史已實現損益</p>
+                <p class="text-xs font-bold font-mono" :class="[portfolio.summary.value.total_realized_gain >= 0 ? 'text-rose-400' : 'text-emerald-400']">
+                  ${{ formatNumber(displayedRealized) }} ({{ weights.realized.toFixed(1) }}%)
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded bg-purple-500"></span>
+              <div>
+                <p class="text-[11px] text-slate-400">退佣折讓/其他</p>
+                <p class="text-xs font-bold font-mono">${{ formatNumber(portfolio.summary.value.total_cash_flow) }} ({{ weights.cashFlow.toFixed(1) }}%)</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 資產配置視覺化比例條 -->
-      <div class="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 space-y-3.5">
-        <h3 class="text-xs font-bold text-slate-300 tracking-wider">資產配置比例</h3>
-        
-        <!-- 比例進度條 -->
-        <div class="h-3 rounded-full bg-slate-950 overflow-hidden flex">
-          <div 
-            class="h-full bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-500" 
-            :style="{ width: `${weights.stock}%` }"
-            title="持股市值"
-          ></div>
-          <div 
-            class="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-500" 
-            :style="{ width: `${weights.dividend}%` }"
-            title="股息收入"
-          ></div>
-          <div 
-            class="h-full bg-gradient-to-r from-sky-500 to-sky-600 transition-all duration-500" 
-            :style="{ width: `${weights.realized}%` }"
-            title="已實現利潤"
-          ></div>
-          <div 
-            class="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500" 
-            :style="{ width: `${weights.cashFlow}%` }"
-            title="退佣折讓"
-          ></div>
-        </div>
-
-        <!-- 比例圖例說明 -->
-        <div class="grid grid-cols-2 gap-2.5 pt-1">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded bg-rose-500"></span>
-            <div>
-              <p class="text-[9px] text-slate-500">當前持股市值</p>
-              <p class="text-xs font-bold font-mono">${{ formatNumber(portfolio.summary.value.total_market_value) }} ({{ weights.stock.toFixed(1) }}%)</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded bg-amber-500"></span>
-            <div>
-              <p class="text-[9px] text-slate-500">累計股息收入</p>
-              <p class="text-xs font-bold font-mono">${{ formatNumber(displayedDividend) }} ({{ weights.dividend.toFixed(1) }}%)</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded bg-sky-500"></span>
-            <div>
-              <p class="text-[9px] text-slate-500">歷史已實現損益</p>
-              <p class="text-xs font-bold font-mono" :class="[portfolio.summary.value.total_realized_gain >= 0 ? 'text-rose-400' : 'text-emerald-400']">
-                ${{ formatNumber(displayedRealized) }} ({{ weights.realized.toFixed(1) }}%)
-              </p>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded bg-purple-500"></span>
-            <div>
-              <p class="text-[9px] text-slate-500">退佣折讓/其他</p>
-              <p class="text-xs font-bold font-mono">${{ formatNumber(portfolio.summary.value.total_cash_flow) }} ({{ weights.cashFlow.toFixed(1) }}%)</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 熱門持股快捷清單 -->
-      <div class="space-y-3">
+      <!-- 右側：庫存焦點清單 (佔 5 欄) -->
+      <div class="lg:col-span-5 space-y-3">
         <div class="flex justify-between items-center px-1">
           <h3 class="text-xs font-bold text-slate-300 tracking-wider">持股庫存焦點</h3>
           <NuxtLink to="/portfolio" class="text-[10px] font-semibold text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-0.5">
@@ -127,7 +130,7 @@
 
         <div v-else class="space-y-2.5">
           <NuxtLink 
-            v-for="pos in portfolio.activePositions.value.slice(0, 3)" 
+            v-for="pos in portfolio.activePositions.value.slice(0, 5)" 
             :key="pos.stock_code"
             to="/portfolio"
             class="flex items-center justify-between p-3.5 bg-slate-900/40 backdrop-blur-sm border border-slate-800/60 hover:border-slate-700/55 rounded-2xl transition-all duration-300 hover:translate-x-1"
@@ -138,7 +141,7 @@
               </div>
               <div>
                 <p class="text-xs font-bold text-slate-200">{{ pos.stock_name }}</p>
-                <p class="text-[10px] text-slate-500 mt-0.5">{{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }} | 現價 ${{ pos.current_price.toFixed(1) }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">{{ pos.shares }} 股 | 均價 ${{ pos.average_cost.toFixed(1) }} | 現價 ${{ pos.current_price.toFixed(1) }}</p>
               </div>
             </div>
 
