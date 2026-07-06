@@ -39,8 +39,142 @@
         </NuxtLink>
       </div>
 
-      <!-- 庫存列表卡片 -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      <!-- 庫存主內容區 (有持股時顯示) -->
+      <template v-else>
+        <!-- 📈 損益排名直方圖區塊 (全新功能) -->
+        <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 md:p-5 space-y-4">
+          <!-- 標題與切換鈕 -->
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <h3 class="text-xs font-bold text-slate-300 tracking-wider flex items-center gap-1.5 uppercase font-sans">
+                <BarChart3 class="w-4 h-4 text-rose-500" />
+                <span>個股損益績效排名</span>
+              </h3>
+              <button 
+                @click="isChartExpanded = !isChartExpanded" 
+                class="text-slate-400 hover:text-slate-200 transition-colors p-1"
+                :title="isChartExpanded ? '收合圖表' : '展開圖表'"
+              >
+                <ChevronDown 
+                  class="w-3.5 h-3.5 transition-transform duration-300"
+                  :class="[isChartExpanded ? 'rotate-180 text-rose-450' : '']"
+                />
+              </button>
+            </div>
+
+            <!-- 切換按鈕 (Tabs) -->
+            <div v-show="isChartExpanded" class="flex bg-slate-950 p-1 rounded-xl border border-slate-850">
+              <button 
+                @click="chartType = 'unrealized'"
+                class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap"
+                :class="[chartType === 'unrealized' ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/10' : 'text-slate-400 hover:text-slate-200']"
+              >
+                未實現損益
+              </button>
+              <button 
+                @click="chartType = 'realized'"
+                class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap"
+                :class="[chartType === 'realized' ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/10' : 'text-slate-400 hover:text-slate-200']"
+              >
+                已實現損益
+              </button>
+            </div>
+          </div>
+
+          <!-- 圖表主體 -->
+          <transition 
+            name="expand"
+            @enter="enterAnimation"
+            @leave="leaveAnimation"
+          >
+            <div v-show="isChartExpanded" class="pt-1">
+              <div v-if="chartData.length === 0" class="py-12 text-center text-xs text-slate-500 font-light">
+                目前尚無該類型的損益統計數據
+              </div>
+              <div v-else class="w-full overflow-x-auto no-scrollbar">
+                <!-- 圖表畫布區，設定固定高度與最小寬度防止擠壓 -->
+                <div class="h-64 flex gap-2 px-4 pt-6 pb-2 min-w-max relative select-none">
+                  
+                  <!-- 背景水平參考線 (Grid Lines) -->
+                  <div class="absolute left-0 right-0 top-6 h-44 pointer-events-none z-0">
+                    <div class="absolute left-0 right-0 top-[25%] h-px border-t border-dashed border-slate-800/40"></div>
+                    <div class="absolute left-0 right-0 top-[50%] h-px border-t border-solid border-slate-800/80"></div>
+                    <!-- 0 水平線標籤 -->
+                    <span class="absolute left-1.5 top-[50%] -translate-y-1/2 text-[10px] text-slate-400 font-bold bg-slate-950/95 px-1.5 py-0.5 rounded border border-slate-850/60 z-10 font-mono">0</span>
+                    <div class="absolute left-0 right-0 top-[75%] h-px border-t border-dashed border-slate-800/40"></div>
+                  </div>
+
+                  <!-- 每一個個股垂直 Column -->
+                  <div 
+                    v-for="item in chartData" 
+                    :key="item.code" 
+                    class="w-14 flex flex-col items-center relative group z-10"
+                  >
+                    <!-- 柱狀圖高度區 (176px) -->
+                    <div class="w-full h-44 relative">
+                      <!-- 正向 Profit Bar -->
+                      <template v-if="item.value >= 0">
+                        <!-- 金額數值標籤 (置於柱狀圖上方) -->
+                        <span 
+                          class="absolute left-1/2 -translate-x-1/2 text-[11px] font-bold text-rose-400 whitespace-nowrap mb-1 transition-all duration-300 group-hover:scale-105"
+                          :style="{ bottom: `calc(50% + ${getBarHeightPercentage(item.value)}% + 2px)` }"
+                        >
+                          {{ formatChartValue(item.value) }}
+                        </span>
+                        <!-- 柱狀圖 -->
+                        <div 
+                          class="absolute left-1/2 -translate-x-1/2 w-5 bg-gradient-to-t from-rose-600 to-rose-455 hover:from-rose-500 hover:to-rose-350 rounded-t-md transition-all duration-500 shadow-md shadow-rose-950/20 group-hover:brightness-110"
+                          :style="{ 
+                            bottom: '50%', 
+                            height: `${getBarHeightPercentage(item.value)}%` 
+                          }"
+                        ></div>
+                      </template>
+
+                      <!-- 負向 Loss Bar -->
+                      <template v-else>
+                        <!-- 金額數值標籤 (置於柱狀圖下方) -->
+                        <span 
+                          class="absolute left-1/2 -translate-x-1/2 text-[11px] font-bold text-emerald-450 whitespace-nowrap mt-1 transition-all duration-300 group-hover:scale-105"
+                          :style="{ top: `calc(50% + ${getBarHeightPercentage(item.value)}% + 2px)` }"
+                        >
+                          {{ formatChartValue(item.value) }}
+                        </span>
+                        <!-- 柱狀圖 -->
+                        <div 
+                          class="absolute left-1/2 -translate-x-1/2 w-5 bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-350 hover:to-emerald-500 rounded-b-md transition-all duration-500 shadow-md shadow-emerald-950/20 group-hover:brightness-110"
+                          :style="{ 
+                            top: '50%', 
+                            height: `${getBarHeightPercentage(item.value)}%` 
+                          }"
+                        ></div>
+                      </template>
+                    </div>
+
+                    <!-- 底部個股代號名稱標籤 -->
+                    <div class="mt-2.5 text-center flex flex-col items-center justify-center pointer-events-none">
+                      <span class="text-xs font-bold text-slate-200 font-mono">{{ item.code }}</span>
+                      <span class="text-[10px] text-slate-400 font-medium truncate max-w-[54px] mt-0.5">{{ item.name }}</span>
+                    </div>
+
+                    <!-- ROI 浮動提示 (若有 ROI 顯示於上方) -->
+                    <span 
+                      v-if="item.roi !== null" 
+                      class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-950/90 border border-slate-800 text-[8px] font-bold px-1.5 py-0.5 rounded-full z-20 pointer-events-none whitespace-nowrap"
+                      :class="[item.value >= 0 ? 'text-rose-450 border-rose-950/40' : 'text-emerald-450 border-emerald-950/40']"
+                    >
+                      ROI {{ item.value >= 0 ? '+' : '' }}{{ item.roi.toFixed(1) }}%
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
+
+        <!-- 庫存列表卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <div 
           v-for="pos in portfolio.activePositions.value" 
           :key="pos.stock_code"
@@ -189,15 +323,68 @@
           </transition>
         </div>
       </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import gsap from 'gsap';
-import { RefreshCw, Briefcase, ChevronDown } from 'lucide-vue-next';
+import { RefreshCw, Briefcase, ChevronDown, BarChart3 } from 'lucide-vue-next';
 
 const portfolio = usePortfolio();
+
+// 損益排名圖表類型：'unrealized' (未實現) | 'realized' (已實現)
+const chartType = ref<'unrealized' | 'realized'>('unrealized');
+const isChartExpanded = ref(true); // 預設展開
+
+// 計算直方圖所需數據
+const chartData = computed(() => {
+  if (chartType.value === 'unrealized') {
+    // 未實現損益排名：僅針對當前持股 (shares > 0)
+    return Object.values(portfolio.allPositions.value)
+      .filter(pos => pos.shares > 0)
+      .map(pos => ({
+        code: pos.stock_code,
+        name: pos.stock_name,
+        value: pos.unrealized_gain,
+        roi: pos.unrealized_roi,
+        displayValue: pos.unrealized_gain >= 0 ? `+$${formatNumber(pos.unrealized_gain)}` : `-$${formatNumber(Math.abs(pos.unrealized_gain))}`
+      }))
+      .sort((a, b) => b.value - a.value);
+  } else {
+    // 已實現損益排名：針對所有歷史交易過且有已實現損益的個股 (不限持股中)
+    return Object.values(portfolio.allPositions.value)
+      .filter(pos => pos.realized_gain !== 0)
+      .map(pos => ({
+        code: pos.stock_code,
+        name: pos.stock_name,
+        value: pos.realized_gain,
+        roi: null,
+        displayValue: pos.realized_gain >= 0 ? `+$${formatNumber(pos.realized_gain)}` : `-$${formatNumber(Math.abs(pos.realized_gain))}`
+      }))
+      .sort((a, b) => b.value - a.value);
+  }
+});
+
+// 取得直方圖的百分比高度 (相對於最大絕對值，單側最大高度為 50% 容器佔比)
+function getBarHeightPercentage(val: number): number {
+  if (chartData.value.length === 0) return 0;
+  const maxAbs = Math.max(...chartData.value.map(item => Math.abs(item.value)), 1);
+  return (Math.abs(val) / maxAbs) * 50;
+}
+
+// 格式化直方圖上方的數值 (千元/萬元簡寫)
+function formatChartValue(val: number): string {
+  const abs = Math.max(0, Math.round(Math.abs(val)));
+  const sign = val >= 0 ? '+' : '-';
+  if (abs >= 10000) {
+    return `${sign}${(abs / 10000).toFixed(1)}萬`;
+  } else if (abs >= 1000) {
+    return `${sign}${(abs / 1000).toFixed(1)}k`;
+  }
+  return `${sign}${abs}`;
+}
 
 // 當前點擊展開明細的個股代號
 const expandedCard = ref<string | null>(null);
@@ -292,5 +479,14 @@ onMounted(async () => {
 .expand-enter-active,
 .expand-leave-active {
   overflow: hidden;
+}
+
+/* 隱藏橫向滾動條 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 </style>

@@ -22,6 +22,10 @@ export function calculatePositions(
   const positions: Record<string, Position> = {};
 
   for (const tx of sorted) {
+    // 預設初始化損益與股利累加欄位，避免過濾時為 undefined
+    tx.realized_gain = 0;
+    tx.dividend_amount = 0;
+
     const code = tx.stock_code;
     const name = tx.stock_name;
 
@@ -80,6 +84,7 @@ export function calculatePositions(
       pos.shares = newShares;
       pos.total_cost = newTotalCost;
       pos.realized_gain += txRealizedGain;
+      tx.realized_gain = txRealizedGain; // 記錄此筆交易之已實現損益
       
       // 若庫存清空，成本歸零
       if (newShares === 0) {
@@ -100,6 +105,7 @@ export function calculatePositions(
       const divShares = shares || 1;
       const dividendAmount = (price * divShares) - fee;
       pos.dividend_received += dividendAmount;
+      tx.dividend_amount = dividendAmount; // 記錄此筆交易之股息收入
     }
   }
 

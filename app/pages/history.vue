@@ -76,6 +76,34 @@
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- 列表區域 (佔 8 欄) -->
       <div class="lg:col-span-8 space-y-3">
+        <!-- 📱 手機版統計摘要 (僅在 lg 以下顯示) -->
+        <div v-if="sortedTimeline.length > 0" class="lg:hidden bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 mb-1 space-y-3">
+          <h3 class="text-xs font-bold text-slate-350 tracking-wider font-sans uppercase">歷史統計摘要</h3>
+          <div class="grid grid-cols-2 gap-3 font-mono">
+            <div class="bg-slate-950/40 border border-slate-850/50 p-2.5 rounded-xl">
+              <span class="block text-[10px] text-slate-400 font-sans">累計已領股息</span>
+              <span class="text-xs font-bold text-amber-400">${{ formatNumber(filteredSummary.totalDividend) }}</span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-850/50 p-2.5 rounded-xl">
+              <span class="block text-[10px] text-slate-400 font-sans">累計折讓退佣</span>
+              <span class="text-xs font-bold text-purple-400">${{ formatNumber(filteredSummary.totalCashFlow) }}</span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-850/50 p-2.5 rounded-xl">
+              <span class="block text-[10px] text-slate-400 font-sans">歷史已實現損益</span>
+              <span 
+                class="text-xs font-bold"
+                :class="[filteredSummary.totalRealizedGain >= 0 ? 'text-rose-455' : 'text-emerald-455']"
+              >
+                ${{ filteredSummary.totalRealizedGain >= 0 ? '+' : '' }}{{ formatNumber(filteredSummary.totalRealizedGain) }}
+              </span>
+            </div>
+            <div class="bg-slate-950/40 border border-slate-850/50 p-2.5 rounded-xl">
+              <span class="block text-[10px] text-slate-400 font-sans">篩選紀錄筆數</span>
+              <span class="text-xs font-bold text-slate-200">{{ filteredSummary.recordCount }} 筆</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 流水帳為空提示 -->
         <div v-if="sortedTimeline.length === 0" class="bg-slate-900/30 border border-slate-800/80 rounded-3xl p-12 text-center">
           <HistoryIcon class="w-10 h-10 mx-auto mb-3 text-slate-700" />
@@ -174,29 +202,29 @@
 
       <!-- 右側側邊欄：歷史統計摘要 (僅大螢幕 lg 以上顯示，佔 4 欄) -->
       <div class="hidden lg:block lg:col-span-4 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-3xl p-5 space-y-4">
-        <h3 class="text-xs font-bold text-slate-300 tracking-wider">歷史統計摘要</h3>
+        <h3 class="text-xs font-bold text-slate-350 tracking-wider uppercase font-sans">歷史統計摘要</h3>
         
         <div class="space-y-3.5 font-mono">
           <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
             <span class="text-xs text-slate-400 font-sans">累計已領股息</span>
-            <span class="text-xs font-bold text-amber-400">${{ formatNumber(portfolio.summary.value.total_dividend) }}</span>
+            <span class="text-xs font-bold text-amber-400">${{ formatNumber(filteredSummary.totalDividend) }}</span>
           </div>
           <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
             <span class="text-xs text-slate-400 font-sans">累計折讓退佣</span>
-            <span class="text-xs font-bold text-purple-400">${{ formatNumber(portfolio.summary.value.total_cash_flow) }}</span>
+            <span class="text-xs font-bold text-purple-400">${{ formatNumber(filteredSummary.totalCashFlow) }}</span>
           </div>
           <div class="flex justify-between items-center py-2 border-b border-slate-800/40">
             <span class="text-xs text-slate-400 font-sans">歷史已實現損益</span>
             <span 
               class="text-xs font-bold"
-              :class="[portfolio.summary.value.total_realized_gain >= 0 ? 'text-rose-400' : 'text-emerald-400']"
+              :class="[filteredSummary.totalRealizedGain >= 0 ? 'text-rose-400' : 'text-emerald-400']"
             >
-              ${{ formatNumber(portfolio.summary.value.total_realized_gain) }}
+              ${{ filteredSummary.totalRealizedGain >= 0 ? '+' : '' }}{{ formatNumber(filteredSummary.totalRealizedGain) }}
             </span>
           </div>
           <div class="flex justify-between items-center py-2">
-            <span class="text-xs text-slate-400 font-sans">歷史紀錄筆數</span>
-            <span class="text-xs font-bold text-slate-200">{{ sortedTimeline.length }} 筆</span>
+            <span class="text-xs text-slate-400 font-sans">篩選紀錄筆數</span>
+            <span class="text-xs font-bold text-slate-200">{{ filteredSummary.recordCount }} 筆</span>
           </div>
         </div>
       </div>
@@ -386,6 +414,9 @@ const uniqueStocksInHistory = computed(() => {
 
 // 合併 transactions 與 cash_flows 為一個完整時間軸列表 (由新至舊)
 const sortedTimeline = computed(() => {
+  // 強制觸發 usePortfolio 中 positions 的計算，以確保 transaction 包含 realized_gain 及 dividend_amount
+  const _ = portfolio.allPositions.value;
+  
   const list: any[] = [];
 
   // 1. 加入交易紀錄
@@ -441,6 +472,33 @@ const filteredTimeline = computed(() => {
     
     return true;
   });
+});
+
+// 根據篩選後的 filteredTimeline 計算統計摘要
+const filteredSummary = computed(() => {
+  let totalDividend = 0;
+  let totalCashFlow = 0;
+  let totalRealizedGain = 0;
+
+  for (const item of filteredTimeline.value) {
+    if (item.isTransaction) {
+      if (item.action === 'DIVIDEND') {
+        totalDividend += (item.dividend_amount || 0);
+      } else if (item.action === 'SELL') {
+        totalRealizedGain += (item.realized_gain || 0);
+      }
+    } else {
+      // 獨立折讓現金流
+      totalCashFlow += (item.amount || 0);
+    }
+  }
+
+  return {
+    totalDividend,
+    totalCashFlow,
+    totalRealizedGain,
+    recordCount: filteredTimeline.value.length
+  };
 });
 
 // 一鍵清除所有篩選條件

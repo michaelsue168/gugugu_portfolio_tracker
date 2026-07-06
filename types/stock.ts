@@ -13,6 +13,8 @@ export interface Transaction {
   tax: number;
   transaction_date: string; // YYYY-MM-DD
   created_at: string;
+  realized_gain?: number;
+  dividend_amount?: number;
 }
 
 export interface CashFlow {
